@@ -11,6 +11,7 @@
     --mangacover-height: 350px;
     --mangacover-width-sm: 150px;
     --mangacover-height-sm: 220px;
+    --status-bar-height: 2rem;
 }
 
 @keyframes shake {

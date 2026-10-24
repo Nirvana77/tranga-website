@@ -40,11 +40,12 @@
                 <UButton icon="i-lucide-settings" variant="ghost" to="/settings" color="secondary" />
             </template>
         </UHeader>
-        <UMain>
+        <UMain class="pb-(--status-bar-height)">
             <UPage>
                 <NuxtPage />
             </UPage>
         </UMain>
+        <StatusBar />
     </UApp>
 </template>
 
