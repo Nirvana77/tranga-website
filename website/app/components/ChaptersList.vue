@@ -71,6 +71,9 @@
                             :key="mangaconnectorId.key"
                             class="bg-elevated p-1 rounded-lg w-fit flex items-center justify-center gap-2">
                             <MangaconnectorIcon v-bind="mangaconnectorId" />
+                            <UTooltip v-if="mangaconnectorId.language" text="Language on this website">
+                                <UBadge :label="mangaconnectorId.language.toUpperCase()" variant="subtle" color="neutral" size="sm" />
+                            </UTooltip>
                             <UTooltip
                                 :text="
                                     mangaconnectorId.useForDownload ? 'Stop downloading from this website' : 'Download from this website'
