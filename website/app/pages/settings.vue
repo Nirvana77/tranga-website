@@ -34,6 +34,21 @@
             </UCard>
             <UCard v-if="settingsStatus === 'success'">
                 <template #header>
+                    <h1>Downloads</h1>
+                </template>
+                <UFormField
+                    label="Download language"
+                    :description="`Chapters are downloaded in this language. Websites with it: ${languageConnectors.join(', ') || 'none'}.`"
+                    help="Global search only searches websites that have this language. Chapters already found keep their language.">
+                    <USelectMenu
+                        :model-value="settings?.downloadLanguage ?? undefined"
+                        :items="languages"
+                        class="w-48"
+                        @update:model-value="setDownloadLanguage" />
+                </UFormField>
+            </UCard>
+            <UCard v-if="settingsStatus === 'success'">
+                <template #header>
                     <h1>Notifications</h1>
                 </template>
                 <NotificationConnectors />
@@ -129,7 +144,28 @@ const onKavitaClick = async () => {
     }
 };
 
-const { status: settingsStatus } = useApi('/v2/Settings', { key: FetchKeys.Settings.All, server: false });
+const {
+    data: settings,
+    status: settingsStatus,
+    refresh: refreshSettings,
+} = useApi('/v2/Settings', { key: FetchKeys.Settings.All, server: false });
+
+const { data: mangaConnectors } = useApi('/v2/MangaConnector', { key: FetchKeys.MangaConnector.All, server: false });
+const enabledConnectors = computed(() => mangaConnectors.value?.filter((c) => c.enabled && c.name !== 'Global') ?? []);
+// Languages the enabled websites offer, the most widely offered first
+const languages = computed(() => {
+    const count = new Map<string, number>();
+    for (const connector of enabledConnectors.value)
+        for (const language of connector.supportedLanguages) count.set(language, (count.get(language) ?? 0) + 1);
+    return [...count.keys()].sort((a, b) => count.get(b)! - count.get(a)! || a.localeCompare(b));
+});
+const languageConnectors = computed(() =>
+    enabledConnectors.value.filter((c) => c.supportedLanguages.includes(settings.value?.downloadLanguage ?? '')).map((c) => c.name)
+);
+const setDownloadLanguage = async (language: string) => {
+    await $api('/v2/Settings/DownloadLanguage/{Language}', { method: 'PATCH', path: { Language: language } });
+    await refreshSettings();
+};
 
 const { data: stats } = useApi('/v2/Stats', { server: false });
 const deCamel = (camel: string): string =>
