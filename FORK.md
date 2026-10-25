@@ -17,6 +17,10 @@ Deploy with `k8s/Tranga/build.sh --website`.
   - It shows what Tranga is doing right now (the current download with progress, plus running and queued counts).
   - Click it for every running, queued and scheduled task.
   - It polls `/v2/Worker` every 3 seconds.
+- **Priorities and limits:**
+  - The manga page has a priority (High/Normal/Low).
+  - Settings → Downloads & tasks has the number of tasks and chapter downloads at the same time, and the order kinds of tasks start in.
+  - The status bar shows running / limit.
 - **Chapter language:** a badge next to each chapter's website icon (EN, IT…).
 - **Download language setting:** Settings → Downloads.
   - Pick the language chapters are downloaded in, from the languages your enabled websites offer.
