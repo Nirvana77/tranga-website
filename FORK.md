@@ -22,7 +22,7 @@ Deploy with `k8s/Tranga/build.sh --website`.
   - Settings → Downloads & tasks has the number of tasks and chapter downloads at the same time, and the order kinds of tasks start in.
   - The status bar shows running / limit.
 - **Chapter language:** a badge next to each chapter's website icon (EN, IT…).
-- **Download language setting:** Settings → Downloads.
+- **Download language setting:** Settings → Downloads & tasks.
   - Pick the language chapters are downloaded in, from the languages your enabled websites offer.
   - It also shows which websites have the selected language.
 - **Docker build fix:** upstream's Dockerfile upgraded npm, and the new npm rejects the `-dd` flag used in the next step. The fork installs with `npm ci` from the lockfile.
