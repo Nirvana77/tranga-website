@@ -7,7 +7,7 @@
                     <p class="">NUXT_PUBLIC_OPEN_FETCH_API_BASE_URL: {{ $config.public.openFetch.api.baseURL }}</p>
                 </div>
             </template>
-            <UCard v-if="settingsStatus === 'success'">
+            <UCard v-if="settings">
                 <template #header>
                     <h1>Libraries</h1>
                 </template>
@@ -32,7 +32,7 @@
                 </template>
                 <FileLibraries />
             </UCard>
-            <UCard v-if="settingsStatus === 'success'">
+            <UCard v-if="settings">
                 <template #header>
                     <h1>Downloads &amp; tasks</h1>
                 </template>
@@ -88,7 +88,7 @@
                     </div>
                 </UFormField>
             </UCard>
-            <UCard v-if="settingsStatus === 'success'">
+            <UCard v-if="settings">
                 <template #header>
                     <h1>Notifications</h1>
                 </template>
@@ -104,7 +104,7 @@
                     </div>
                 </template>
             </UCard>
-            <UCard v-if="settingsStatus === 'success'">
+            <UCard v-if="settings">
                 <template #header>
                     <h1>Maintenance</h1>
                 </template>
@@ -186,6 +186,8 @@ const onKavitaClick = async () => {
     }
 };
 
+// Gate the cards on settings, not on the status: the status is 'pending' during every refresh,
+// which unmounted the cards and made the page jump
 const {
     data: settings,
     status: settingsStatus,
@@ -221,7 +223,10 @@ const moveCategory = async (index: number, by: number) => {
     await refreshSettings();
 };
 const setLimit = async (setting: 'MaxConcurrentWorkers' | 'MaxConcurrentDownloads', amount?: number | null) => {
-    if (!amount || amount < 1) return;
+    if (!amount || amount < 1 || !settings.value) return;
+    // Show the new value right away instead of after the reload
+    if (setting === 'MaxConcurrentWorkers') settings.value.maxConcurrentWorkers = amount;
+    else settings.value.maxConcurrentDownloads = amount;
     if (setting === 'MaxConcurrentWorkers')
         await $api('/v2/Settings/MaxConcurrentWorkers/{Amount}', { method: 'PATCH', path: { Amount: amount } });
     else await $api('/v2/Settings/MaxConcurrentDownloads/{Amount}', { method: 'PATCH', path: { Amount: amount } });
