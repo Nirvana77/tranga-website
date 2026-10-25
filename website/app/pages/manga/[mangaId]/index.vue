@@ -12,6 +12,13 @@
                         :library-id="manga?.fileLibraryId"
                         class="w-full"
                         @library-changed="refreshNuxtData(FetchKeys.Manga.Id(mangaId))" />
+                    <UFormField v-if="manga" label="Priority" help="Chapters of higher-priority manga download first." class="mt-2">
+                        <USelect
+                            :model-value="manga.priority"
+                            :items="priorities"
+                            class="w-40"
+                            @update:model-value="(p: MangaPriority) => setPriority(p)" />
+                    </UFormField>
                     <div v-if="manga" class="flex flex-row gap-2 w-full flex-wrap my-2 justify-between">
                         <div
                             v-for="mangaconnectorId in manga.mangaConnectorIds.sort((a, b) =>
@@ -55,6 +62,8 @@
 
 <script setup lang="ts">
 import MangaDetailPage from '~/components/MangaDetailPage.vue';
+import type { components } from '#open-fetch-schemas/api';
+type MangaPriority = components['schemas']['MangaPriority'];
 const { $api } = useNuxtApp();
 const route = useRoute();
 const mangaId = route.params.mangaId as string;
@@ -71,6 +80,16 @@ const { data: manga } = await useApi('/v2/Manga/{MangaId}', {
     lazy: true,
     server: false,
 });
+
+const priorities: { label: string; value: MangaPriority }[] = [
+    { label: 'High', value: 'High' },
+    { label: 'Normal', value: 'Normal' },
+    { label: 'Low', value: 'Low' },
+];
+const setPriority = async (priority: MangaPriority) => {
+    await $api('/v2/Manga/{MangaId}/Priority/{Priority}', { method: 'PATCH', path: { MangaId: mangaId, Priority: priority } });
+    await refreshNuxtData(FetchKeys.Manga.Id(mangaId));
+};
 
 const setRequestedFrom = async (MangaConnectorName: string, IsRequested: boolean) => {
     await $api('/v2/Manga/{MangaId}/DownloadFrom/{MangaConnectorName}/{IsRequested}', {

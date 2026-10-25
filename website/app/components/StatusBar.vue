@@ -10,7 +10,10 @@
                 :model-value="current.progress * 100"
                 size="xs"
                 class="w-32 shrink-0 max-sm:hidden" />
-            <span class="ml-auto shrink-0 text-dimmed">{{ running.length }} running · {{ queued.length }} queued</span>
+            <span class="ml-auto shrink-0 text-dimmed">
+                {{ running.length }}<template v-if="settings"> / {{ settings.maxConcurrentWorkers }}</template> running ·
+                {{ queued.length }} queued
+            </span>
         </button>
         <template #content>
             <div class="p-3 w-[min(32rem,calc(100vw-2rem))] max-h-[60dvh] overflow-y-auto flex flex-col gap-3 text-sm">
@@ -48,6 +51,8 @@ const maxQueuedShown = 20;
 const refreshIntervalMs = 3000;
 
 const { data: workers, error, refresh } = useApi('/v2/Worker', { key: FetchKeys.Workers.All, server: false });
+// Shared with the settings page, so a changed limit shows up here too
+const { data: settings } = useApi('/v2/Settings', { key: FetchKeys.Settings.All, server: false });
 
 let timer: ReturnType<typeof setInterval> | undefined;
 onMounted(() => {

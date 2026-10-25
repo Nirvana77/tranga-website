@@ -34,7 +34,7 @@
             </UCard>
             <UCard v-if="settingsStatus === 'success'">
                 <template #header>
-                    <h1>Downloads</h1>
+                    <h1>Downloads &amp; tasks</h1>
                 </template>
                 <UFormField
                     label="Download language"
@@ -45,6 +45,47 @@
                         :items="languages"
                         class="w-48"
                         @update:model-value="setDownloadLanguage" />
+                </UFormField>
+                <div class="flex flex-row flex-wrap gap-6 mt-4">
+                    <UFormField label="Tasks at the same time" help="Downloads, chapter checks, covers… all count.">
+                        <UInputNumber
+                            :model-value="settings?.maxConcurrentWorkers"
+                            :min="1"
+                            :max="64"
+                            class="w-32"
+                            @update:model-value="(n?: number | null) => setLimit('MaxConcurrentWorkers', n)" />
+                    </UFormField>
+                    <UFormField label="Chapter downloads at the same time" help="Each one also takes a task slot.">
+                        <UInputNumber
+                            :model-value="settings?.maxConcurrentDownloads"
+                            :min="1"
+                            :max="64"
+                            class="w-32"
+                            @update:model-value="(n?: number | null) => setLimit('MaxConcurrentDownloads', n)" />
+                    </UFormField>
+                </div>
+                <UFormField
+                    label="Task order"
+                    help="When all slots are busy, the kind of task higher in this list starts first."
+                    class="mt-4">
+                    <div class="flex flex-col gap-1 w-fit">
+                        <div v-for="(category, index) in taskPriority" :key="category" class="flex flex-row items-center gap-2">
+                            <span class="text-dimmed w-4 text-right">{{ index + 1 }}</span>
+                            <span class="w-64">{{ categoryLabels[category] }}</span>
+                            <UButton
+                                icon="i-lucide-arrow-up"
+                                size="xs"
+                                variant="ghost"
+                                :disabled="index === 0"
+                                @click="moveCategory(index, -1)" />
+                            <UButton
+                                icon="i-lucide-arrow-down"
+                                size="xs"
+                                variant="ghost"
+                                :disabled="index === taskPriority.length - 1"
+                                @click="moveCategory(index, 1)" />
+                        </div>
+                    </div>
                 </UFormField>
             </UCard>
             <UCard v-if="settingsStatus === 'success'">
@@ -97,6 +138,7 @@ import {
     LazyPushoverModal,
 } from '#components';
 import FileLibraries from '~/components/FileLibraries.vue';
+import type { components } from '#open-fetch-schemas/api';
 import { refreshNuxtData } from '#app';
 const overlay = useOverlay();
 const { $api } = useNuxtApp();
@@ -162,6 +204,30 @@ const languages = computed(() => {
 const languageConnectors = computed(() =>
     enabledConnectors.value.filter((c) => c.supportedLanguages.includes(settings.value?.downloadLanguage ?? '')).map((c) => c.name)
 );
+type WorkerCategory = components['schemas']['WorkerCategory'];
+const categoryLabels: Record<WorkerCategory, string> = {
+    Downloads: 'Chapter downloads',
+    ChapterChecks: 'Checking for new chapters',
+    Covers: 'Covers',
+    Metadata: 'Metadata',
+    Maintenance: 'Notifications, libraries & cleanup',
+};
+const taskPriority = computed<WorkerCategory[]>(() => settings.value?.taskPriority ?? []);
+const moveCategory = async (index: number, by: number) => {
+    const order = [...taskPriority.value];
+    const [category] = order.splice(index, 1);
+    order.splice(index + by, 0, category!);
+    await $api('/v2/Settings/TaskPriority', { method: 'PATCH', body: order });
+    await refreshSettings();
+};
+const setLimit = async (setting: 'MaxConcurrentWorkers' | 'MaxConcurrentDownloads', amount?: number | null) => {
+    if (!amount || amount < 1) return;
+    if (setting === 'MaxConcurrentWorkers')
+        await $api('/v2/Settings/MaxConcurrentWorkers/{Amount}', { method: 'PATCH', path: { Amount: amount } });
+    else await $api('/v2/Settings/MaxConcurrentDownloads/{Amount}', { method: 'PATCH', path: { Amount: amount } });
+    await refreshSettings();
+};
+
 const setDownloadLanguage = async (language: string) => {
     await $api('/v2/Settings/DownloadLanguage/{Language}', { method: 'PATCH', path: { Language: language } });
     await refreshSettings();
